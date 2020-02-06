@@ -34,7 +34,7 @@ int  main(int argc, char** argv)
 	  i++;
 
     }
-    printf("%d",frequency);
+    printf("%d\n",frequency);
 	return 0;
 
 }
