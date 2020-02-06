@@ -14,8 +14,7 @@ int main(int argc, char** argv)
     first_arg = argv[1];
     second_arg = argv[2];
 
-    printf("My program was given two arguments: %s %s\n",
-           first_arg, second_arg);
+    printf("My program was given two arguments: %s %s\n",first_arg, second_arg);
 
     return 0;
 
