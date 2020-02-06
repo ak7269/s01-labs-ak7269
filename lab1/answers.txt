@@ -1,11 +1,11 @@
-Name:    <FirstName LastName>
-net ID:       xxnnn
-NYU ID(N#):   N99999999
+Name:    Anshika Kapoor 
+net ID:       ak7269
+NYU ID(N#):   N16757402
 
-Collaborators (who you talked to about the lab, what you talked about):
+Collaborators (who you talked to about the lab, what you talked about): 
 
 
-Source material that you consulted:
+Source material that you consulted: Google where I read more about how gdb works, how to catch bugs in a program using gdb and for understanding futex.  
 
 
 Other acknowledgments:
@@ -13,22 +13,22 @@ Other acknowledgments:
 
 -------------------------------------------------------------------------------
 
-Answer to Exercise 6:
+Answer to Exercise 6: It was a syntax error. A ; was misisng between the two lines of C code. 
 
 
-Answer to Exercise 7:
+Answer to Exercise 7: do while loops execute once initially and then checks the while condition. Due to this, the do while loop here is accessing an empty linked list and saying that the size of the linked list is 1 even though it is 0. Therefore I changed the do while loop to a while loop so that it checks the condition and does not enter the loop if it is an empty linked list.    
 
 
-Answer to Exercise 8:
+Answer to Exercise 8: The file name is blkdev.h which I got after I typed :tag block_device_operations and :ls commands. 
 
 
-Answer to Exercise 9:
+Answer to Exercise 9: futex_pi_state is a kernel system call. The pi state is related to the activity of locking. It is defined in futex.c file on line 190.
 
 
-Answer to Exercise 10:
+Answer to Exercise 10: There are 3 functions that contain proc_sched and task in the linux kernel. They are defined in autogroup.c and debug.c . They are defined in lines  246, 1002, 877 which I got by typing :tag function_name and then :ls command. 
 
 
-Answer to Exercise 11:
+Answer to Exercise 11: There are 5149 header files in the linux source code. To get the output from find to wc I typed find . -iname "*.h"|wc .
 
 
 
