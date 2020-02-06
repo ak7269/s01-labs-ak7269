@@ -29,15 +29,14 @@ double
 point_dist(struct point *pt1, struct point *pt2)
 {
 	// TODO: Your code here.
-	int x,y;
+	double x,y;
 	set_point(pt1,x,y);
 	set_point(pt2,x,y);
-
-	double dx=pt2->x-pt1->x;
-	double  dy=pt2->y-pt1->y;
-	double  distance;
-	distance=sqrt((dx*dx)+(dy*dy));
-	return distance;
+	double dx=(pt2->x)-(pt1->x);
+	double dy=(pt2->y)-(pt1->y);
+	double dist;
+	dist=sqrt((dx*dx)+(dy*dy));
+	return dist;
 
 
 }

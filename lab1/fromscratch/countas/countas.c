@@ -10,29 +10,31 @@ int  main(int argc, char** argv)
   }
 
     
-   char* s=argv[1];
+    char* str=argv[1];
     int length=0;
     int x=0;
-   int a=1;
+    int a=1;
     while(a==1)
     {  
-	 if(s[x]=='\0')
+	 if(str[x]=='\0')
 		 a=2;
 	 else{ 
-	length++;
+		length++;
 	 }
 	x++;
     }
     
    
-    int count=0;
-    for(int i=0;i<length;i++)
+    int frequency=0;
+    int i=0;
+    while(i<length)
     {
-	  if(s[i]=='a')
-		  count++;
+	  if(str[i]=='a')
+		  frequency++;
+	  i++;
 
     }
-    printf("%d",count);
+    printf("%d",frequency);
 	return 0;
 
 }
