@@ -28,7 +28,7 @@ Answer to Exercise 9: futex_pi_state is a kernel system call. The pi state is re
 Answer to Exercise 10: There are 3 functions that contain proc_sched and task in the linux kernel. One is defined in file autogroup.c and the other two in file debug.c . They are defined in lines  246, 1002, 877 which I got by typing the commands :tag function_name and then :ls. 
 
 
-Answer to Exercise 11: There are 2359 header files in the linux source code. To get the output from find to wc I typed find . -iname "*.h"|wc .
+Answer to Exercise 11: There are 2359 header files in the linux source code. To get the output from find to wc I typed find . -iname "*.h"|wc.
 
 
 
