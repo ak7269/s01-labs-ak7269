@@ -19,7 +19,9 @@ int  main(int argc, char** argv)
 
 	if(length_a<3)
 	{
-		if(length_b<3){
+		if(length_b<3)
+		{
+
 			printf("Strings are too short!");
 			return 0;
 		}
