@@ -87,7 +87,11 @@ teardown() {
 
 @test "check ls -al" {
     result=$(./ls -al ${TEST_DIR} | awk '{print $1}' | sort)
+<<<<<<< HEAD
     compare=$(ls -1al --color=never --file-type ${TEST_DIR} | grep -v "^total"| sed 's/@$//g' | awk '{print $1}' | sort)
+=======
+    compare=$(ls -1al --color=never --file-type ${TEST_DIR} | grep -v "^total"| sed 's/@$//g' | sed 's!\./!.!' | awk '{print $1}' | sort)
+>>>>>>> upstream/master
     if [ "$result" != "$compare" ]; then
         printf "Failed: Diff between output and expected:\n"
         diff <(echo "$result") <(echo "$compare")
@@ -107,7 +111,11 @@ teardown() {
 
 @test "check ls -alR" {
     result=$(./ls -alR ${TEST_DIR} | sed -r '/^\s*$/d'  | awk '{print $1,$2,$3,$4,$5,$6,$7,$8,$9}' | sort)
+<<<<<<< HEAD
     compare=$(ls -1alR --color=never --file-type ${TEST_DIR} | grep -v "^total" | sed -r '/^\s*$/d'| sed 's/@$//g' |awk '{print $1,$2,$3,$4,$5,$6,$7,$8,$9}' | sort)
+=======
+    compare=$(ls -1alR --color=never --file-type ${TEST_DIR} | grep -v "^total" | sed -r '/^\s*$/d'| sed 's!\./!.!' | sed 's/@$//g' |awk '{print $1,$2,$3,$4,$5,$6,$7,$8,$9}' | sort)
+>>>>>>> upstream/master
     if [ "$result" != "$compare" ]; then
         printf "Failed: Diff between output and expected:\n"
         diff <(echo "$result") <(echo "$compare")

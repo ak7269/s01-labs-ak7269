@@ -12,8 +12,12 @@ void
 set_point(struct point *pt, double x, double y)
 {
 	// TODO: Your code here.
+<<<<<<< HEAD
 	pt->x=x;
 	pt->y=y;
+=======
+	assert(0);
+>>>>>>> upstream/master
 }
 
 // Compute the planar distance between two points. Recall that the
@@ -29,6 +33,7 @@ double
 point_dist(struct point *pt1, struct point *pt2)
 {
 	// TODO: Your code here.
+<<<<<<< HEAD
 	double x,y;
 	set_point(pt1,x,y);
 	set_point(pt2,x,y);
@@ -39,4 +44,8 @@ point_dist(struct point *pt1, struct point *pt2)
 	return dist;
 
 
+=======
+	assert(0);
+	return 0.0;
+>>>>>>> upstream/master
 }

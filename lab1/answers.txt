@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Name:    Anshika Kapoor 
 net ID:       ak7269
 NYU ID(N#):   N16757402
@@ -6,6 +7,16 @@ Collaborators (who you talked to about the lab, what you talked about):
 
 
 Source material that you consulted: Google, where I read more about how gdb works, how to catch bugs in a program using gdb and about futex to strengthen my understanding of futex.  
+=======
+Name:    <FirstName LastName>
+net ID:       xxnnn
+NYU ID(N#):   N99999999
+
+Collaborators (who you talked to about the lab, what you talked about):
+
+
+Source material that you consulted:
+>>>>>>> upstream/master
 
 
 Other acknowledgments:
@@ -13,6 +24,7 @@ Other acknowledgments:
 
 -------------------------------------------------------------------------------
 
+<<<<<<< HEAD
 Answer to Exercise 6: It was a syntax error. A ; was misisng between the two lines of C code. 
 
 
@@ -29,6 +41,24 @@ Answer to Exercise 10: There are 3 functions that contain proc_sched and task in
 
 
 Answer to Exercise 11: There are 2359 header files in the linux source code. To get the output from find to wc I typed find . -iname "*.h"|wc.
+=======
+Answer to Exercise 6:
+
+
+Answer to Exercise 7:
+
+
+Answer to Exercise 8:
+
+
+Answer to Exercise 9:
+
+
+Answer to Exercise 10:
+
+
+Answer to Exercise 11:
+>>>>>>> upstream/master
 
 
 

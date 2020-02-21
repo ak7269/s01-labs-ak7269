@@ -35,6 +35,7 @@ extern void free_node(struct list_node *node);
 void
 list_insert(struct list_node *head, int value)
 {
+<<<<<<< HEAD
         assert(head != NULL);
 	struct list_node *new_node=alloc_node();
 
@@ -42,6 +43,12 @@ list_insert(struct list_node *head, int value)
 	head->next=new_node;
 	new_node->value=value;
 
+=======
+	assert(head != NULL);
+
+	// TODO: Your code here.
+	assert(0);
+>>>>>>> upstream/master
 }
 
 // Return a pointer to the last node in a linked list, starting
@@ -64,6 +71,7 @@ struct list_node *
 list_end(struct list_node *head)
 {
 	assert(head != NULL);
+<<<<<<< HEAD
 	while(head)
 	{
 		if(head->next==NULL)
@@ -71,6 +79,12 @@ list_end(struct list_node *head)
 		head=head->next;
 	}
 	return head;
+=======
+
+	// TODO: Your code here.
+	assert(0);
+	return NULL;
+>>>>>>> upstream/master
 }
 
 // Return the number of nodes in a linked list, starting from the
@@ -93,6 +107,7 @@ int
 list_size(struct list_node *head)
 {
 	assert(head != NULL);
+<<<<<<< HEAD
 	int length=0;
 	while(head)
 	{
@@ -102,6 +117,12 @@ list_size(struct list_node *head)
 		head=head->next;
 	}
 	return length;
+=======
+
+	// TODO: Your code here.
+	assert(0);
+	return 0;
+>>>>>>> upstream/master
 }
 
 // Return a pointer to the first node in the given linked list
@@ -131,6 +152,7 @@ list_find(struct list_node *head, int value, struct list_node **predp)
 	assert(head != NULL);
 	assert(predp != NULL);
 
+<<<<<<< HEAD
 	int flag=0;
 	*predp=NULL;
 	while(head)
@@ -154,6 +176,11 @@ list_find(struct list_node *head, int value, struct list_node **predp)
 	else
 		return head;
 	return 0;
+=======
+	// TODO: Your code here.
+	assert(0);
+	return NULL;
+>>>>>>> upstream/master
 }
 
 // Remove a node from the given linked list (starting at the given head)
@@ -208,6 +235,7 @@ list_remove(struct list_node **headp, int value)
 {
 	assert(headp != NULL);
 	assert(*headp != NULL);
+<<<<<<< HEAD
 	struct list_node *pred;
 	struct list_node *temp;
 	struct list_node *b;
@@ -232,5 +260,10 @@ list_remove(struct list_node **headp, int value)
 	}
 	return 1;
 	}
+=======
+
+	// TODO: Your code here.
+	assert(0);
+>>>>>>> upstream/master
 	return 0;
 }
