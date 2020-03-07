@@ -65,7 +65,7 @@ enqueueTasks(int maxTasks, EStore* store)
  * ------------------------------------------------------------------
  * enqueueStops --
  *
- *      Enqueue "num" stop requests (i.e. one per worker thread) into
+ *     a Enqueue "num" stop requests (i.e. one per worker thread) into
  *      the task queue associated with this request generator.
  *
  *      Hint: Use the stop_handler function declared in
@@ -81,6 +81,14 @@ void RequestGenerator::
 enqueueStops(int num)
 {
     // TODO: Your code here.
+    //
+    Task task;
+    task.handler=stop_handler;
+    task.arg=nullptr;
+      for(int i=0;i<num;i++){
+      	      taskQueue->enqueue(task);
+	
+	}
 }
 
 SupplierRequestGenerator::

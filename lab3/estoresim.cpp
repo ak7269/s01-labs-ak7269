@@ -1,8 +1,11 @@
 #include <cstring>
 #include <cstdlib>
 
+
 #include "EStore.h"
 #include "TaskQueue.h"
+#include "sthread.h"
+#include "RequestGenerator.h"
 
 class Simulation
 {
@@ -42,14 +45,22 @@ class Simulation
 static void*
 supplierGenerator(void* arg)
 {
-    // TODO: Your code here.
-    return NULL; // Keep compiler happy.
+    // TODO: Your code here
+    Simulation* sim=(Simulation*)arg;
+    SupplierRequestGenerator gen1{&sim->supplierTasks};
+    int max=sim->maxTasks;
+    for(int i=0;i<max;i++) {
+	    gen1.enqueueTasks(max,&sim->store); 
+    }
+
+    gen1.enqueueStops(sim->numSuppliers);
+    exit(0); // Keep compiler happy.
 }
 
 /*
  * ------------------------------------------------------------------
  * customerGenerator --
- *
+
  *      The customer generator thread. The argument is a pointer to
  *      the shared Simulation object.
  *
@@ -73,8 +84,20 @@ supplierGenerator(void* arg)
 static void*
 customerGenerator(void* arg)
 {
-    // TODO: Your code here.
-    return NULL; // Keep compiler happy.
+    // TODO: Your code here
+    Simulation* sim=(Simulation*)arg;
+    bool res=(sim->store).fineModeEnabled();
+    CustomerRequestGenerator gen1{&sim->supplierTasks,res};
+    int max=sim->maxTasks;
+     for(int i=0;i<max;i++){
+	      gen1.enqueueTasks(max,&sim->store);
+      }
+
+   gen1.enqueueStops(sim->numSuppliers);
+
+    exit(0);
+     // Keep compiler happy.
+
 }
 
 /*
@@ -94,10 +117,17 @@ customerGenerator(void* arg)
 static void*
 supplier(void* arg)
 {
-    // TODO: Your code here.
-    return NULL; // Keep compiler happy.
+    // TODO: Your code here. 
+    Simulation* sim=(Simulation*)arg;
+    int numSupply=sim->numSuppliers;
+    for(int i=0;i<numSupply;i++){
+	    Task t= (sim->supplierTasks).dequeue();
+	    t.handler(t.arg);
+	     
+    }
+    return NULL;
+    // Keep compiler happy.
 }
-
 /*
  * ------------------------------------------------------------------
  * customer --
@@ -116,7 +146,13 @@ static void*
 customer(void* arg)
 {
     // TODO: Your code here.
-    return NULL; // Keep compiler happy.
+     Simulation* sim=(Simulation*)arg;
+     int numCust = sim->numCustomers;
+     for(int i=0;i<numCust;i++){
+	      Task t = (sim->customerTasks).dequeue();
+	      t.handler(t.arg);
+     }
+   return NULL;// Keep compiler happy.
 }
 
 /*
@@ -146,8 +182,38 @@ static void
 startSimulation(int numSuppliers, int numCustomers, int maxTasks, bool useFineMode)
 {
     // TODO: Your code here.
-}
 
+     bool fineMode=useFineMode;
+
+     Simulation sim(fineMode);
+     sim.maxTasks=maxTasks; 
+     sim.numSuppliers=numSuppliers;
+     sim.numCustomers=numCustomers;
+    
+     sthread_t sG,cG;
+     sthread_t * customers = new sthread_t[numCustomers];
+     sthread_t * suppliers = new sthread_t[numSuppliers];  
+
+     //Simulation * sim_on_heap = new Simulation(fineMode);
+
+     sthread_create (&sG,supplierGenerator,&sim);
+     sthread_create (&cG,customerGenerator,&sim);
+    //create two arrays of numS and numC supplier and customer threads 
+     for(int i=0;i<numSuppliers;i++)
+	     sthread_create (&customers[i],customer,&sim);
+     for(int i=0;i<numCustomers;i++)
+	     sthread_create (&suppliers[i],supplier,&sim);
+
+     sthread_join(sG);
+     sthread_join(cG);
+
+    for(int i=0;i<numSuppliers;i++)
+     sthread_join(suppliers[i]);
+    for(int i=0;i<numCustomers;i++)
+     sthread_join(customers[i]);
+
+	    
+}
 int main(int argc, char **argv)
 {
     bool useFineMode = false;

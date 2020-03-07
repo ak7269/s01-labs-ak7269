@@ -1,16 +1,31 @@
-
+#include <mutex>
+#include <condition_variable>
+#include <queue>
 #include "TaskQueue.h"
+#include "sthread.h"
+//int s=q.size();
 
 TaskQueue::
 TaskQueue()
 {
     // TODO: Your code here.
+  
+ smutex_init(&m);
+ scond_init(&c);
+
+ 
 }
 
 TaskQueue::
 ~TaskQueue()
 {
-    // TODO: Your code here.
+
+ smutex_destroy(&m);
+ scond_destroy(&c);
+ 
+       
+	// TODO: Your code here.
+   // ~TaskQueue()=default;
 }
 
 /*
@@ -28,7 +43,10 @@ int TaskQueue::
 size()
 {
     // TODO: Your code here.
-    return -999; // Keep compiler happy until routine done.
+    //
+   int length=q.size();
+   return length;
+    //return -999; // Keep compiler happy until routine done.
 }
 
 /*
@@ -46,7 +64,16 @@ bool TaskQueue::
 empty()
 {
     // TODO: Your code here.
-    return false; // Keep compiler happy until routine done.
+    //
+//	std::mutex::pthread_mutex_lock(mutex);
+	if( q.empty()==true)
+		return true;
+	else
+		return false;
+	return false;
+
+	
+    //return false; // Keep compiler happy until routine done.
 }
 
 /*
@@ -63,8 +90,12 @@ empty()
 void TaskQueue::
 enqueue(Task task)
 {
-    // TODO: Your code here.
+   smutex_lock(&m);
+    q.push(task);
+    scond_signal(&c,&m);  
+    smutex_unlock(&m);
 }
+    
 
 /*
  * ------------------------------------------------------------------
@@ -79,9 +110,22 @@ enqueue(Task task)
  * ------------------------------------------------------------------
  */
 Task TaskQueue::
-dequeue()
+dequeue(void)
 {
     // TODO: Your code here.
-    return Task(); // Keep compiler happy until routine done.
+    smutex_lock(&m);
+    while(q.empty())
+    {
+           scond_wait(&c,&m);
+    }
+    Task t= q.front();
+    q.pop();
+   // handler_t arg;
+ //  Task t;
+//   t.handler(t.arg);
+ 
+   smutex_unlock(&m);
+  return t;
+   // return Task(); // Keep compiler happy until routine done.
 }
 
