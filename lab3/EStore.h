@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-
+#include "sthread.h"
 #include "Request.h"
 
 /* 
@@ -31,7 +31,7 @@ class Item {
     int quantity;
     double price;
     double discount;
-
+//smutex_t  itemLock;
     Item();
     ~Item();
 
@@ -67,9 +67,14 @@ class Item {
 class EStore {
     private:
     Item inventory[INVENTORY_SIZE];
-    const bool fineMode;
+        const bool fineMode;
     // TODO: More needed here.
-
+   // int discount=0;
+    double storeshipping=3;
+    double discountcost=0;
+    smutex_t  m;
+    scond_t c; 
+    smutex_t itemLock[INVENTORY_SIZE];
     public:
 
     explicit EStore(bool enableFineMode);

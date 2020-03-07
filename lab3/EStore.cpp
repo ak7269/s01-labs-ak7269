@@ -1,7 +1,7 @@
 #include <cassert>
 
 #include "EStore.h"
-
+#include <cstdio>
 using namespace std;
 
 
@@ -21,12 +21,19 @@ EStore(bool enableFineMode)
     : fineMode(enableFineMode)
 {
     // TODO: Your code here.
+    smutex_init(&m);
+    scond_init(&c);
+  
 }
 
 EStore::
 ~EStore()
-{
+ {
     // TODO: Your code here.
+    //
+   smutex_destroy(&m);
+   scond_destroy(&c);
+
 }
 
 /*
@@ -62,10 +69,38 @@ EStore::
 void EStore::
 buyItem(int item_id, double budget)
 {
+
+	double purchaseprice=inventory[item_id].price+storeshipping;
     assert(!fineModeEnabled());
 
     // TODO: Your code here.
-}
+    //
+    smutex_lock(&m);
+	if(inventory[item_id].valid==false)
+	{
+		return;
+	}
+	else{
+		if(inventory[item_id].quantity<=0 || purchaseprice>budget)
+		{
+		while(inventory[item_id].quantity>0 && purchaseprice<=budget)
+		{
+			scond_wait(&c,&m);
+		}
+		}
+		if(inventory[item_id].valid==true)
+		{
+			buyItem(item_id,budget);
+		}
+
+	
+
+	}
+	smutex_unlock(&m);
+	return;
+
+
+ }
 
 /*
  * ------------------------------------------------------------------
@@ -116,8 +151,51 @@ void EStore::
 buyManyItems(vector<int>* item_ids, double budget)
 {
     assert(fineModeEnabled());
-
+	
     // TODO: Your code here.
+//	for(size_t i=0;i<(*item_ids).size();i++)
+//	{
+//		Item curr=this->inventory[(*item_ids)[i]];
+//		smutex_lock(&(curr.itemLock));
+//		printf("%d ", (*item_ids)[i]);
+
+
+	
+//	}
+//	printf("\n");
+//	bool buyable=true;
+//	double total_cost=0;
+//	for(size_t i=0;i<(*item_ids).size();i++)
+//	{
+//		Item curr= this->inventory[(*item_ids)[i]];
+//		total_cost+= (((curr.price)*(1-curr.discount))* (1-this->discountcost));
+//		if(!(curr.valid) || curr.quantity <= 0){
+//			buyable=false;
+//			break;
+//		}
+		
+				
+//	}
+//	if(!buyable || total_cost>budget) {
+		return;
+//	}
+//	for(size_t i=0;i<(*item_ids).size();i++)
+//	{
+//		Item curr= this->inventory[(*item_ids)[i]];
+//		(curr.quantity)--;
+
+				
+//	}
+//	for(size_t i=0;i<(*item_ids).size();i++)
+//	{
+//		Item curr= this->inventory[(*item_ids)[i]];
+//		smutex_unlock(&(curr.itemLock));
+
+				
+//	}
+
+
+
 }
 
 /*
@@ -137,6 +215,22 @@ void EStore::
 addItem(int item_id, int quantity, double price, double discount)
 {
     // TODO: Your code here.
+    //
+    //
+    	smutex_lock(&m);
+	if(inventory[item_id].valid==true)
+	{
+		return;
+	}
+
+
+	inventory[item_id].price=price;
+	inventory[item_id].quantity=quantity;
+	inventory[item_id].discount=discount;
+	inventory[item_id].valid=true;
+	smutex_unlock(&m);
+
+
 }
 
 /*
@@ -158,6 +252,29 @@ void EStore::
 removeItem(int item_id)
 {
     // TODO: Your code here.
+    //
+   smutex_lock(&m);
+  // int f=0;
+  //  for(int i=0;i<INVENTORY_SIZE;i++)
+  //  {
+//	if(i==item_id)
+//		f=1;
+
+
+ //   }
+   if(inventory[item_id].valid==false)
+    {
+	return;
+    }
+
+	inventory[item_id].price=0.0;
+	inventory[item_id].quantity=0;
+	inventory[item_id].discount=0.0;
+	inventory[item_id].valid=false;
+
+	scond_signal(&c,&m);
+	smutex_unlock(&m);
+
 }
 
 /*
@@ -176,6 +293,13 @@ void EStore::
 addStock(int item_id, int count)
 {
     // TODO: Your code here.
+    smutex_lock(&m);
+    if(inventory[item_id].valid==false){
+      scond_signal(&c,&m);
+      return;
+    }
+    inventory[item_id].quantity+=count;
+    smutex_unlock(&m);
 }
 
 /*
@@ -195,11 +319,35 @@ addStock(int item_id, int count)
 void EStore::
 priceItem(int item_id, double price)
 {
-    // TODO: Your code here.
+smutex_lock(&m);
+// int f=0;
+
+ //   for(int i=0;i<INVENTORY_SIZE;i++)
+   // {
+//	if(i==item_id)
+//		f=1;
+
+
+  //  }
+    //if(f==0)
+   // {
+//	return;
+  //  }
+  if(inventory[item_id].valid==false)
+	  return;
+  if(price<inventory[item_id].price)
+  {
+	  scond_signal(&c,&m);
+  }
+	inventory[item_id].price=price;
+
+smutex_unlock(&m);
+   // TODO: Your code here.
+
 }
 
 /*
- * ------------------------------------------------------------------
+ * -----------------------------------------------------------------
  * discountItem --
  *
  *      Change the discount on the item. If the store does not carry
@@ -216,6 +364,16 @@ void EStore::
 discountItem(int item_id, double discount)
 {
     // TODO: Your code here.
+    smutex_lock(&m);
+ if(inventory[item_id].valid==false){
+             return;
+     }
+     if(inventory[item_id].discount<discount)
+             scond_signal(&c,&m);
+
+       //smutex_lock(&m);
+       inventory[item_id].discount=discount;
+       smutex_unlock(&m);
 }
 
 /*
@@ -234,6 +392,19 @@ void EStore::
 setShippingCost(double cost)
 {
     // TODO: Your code here.
+//int i;
+//	for(i=0;i<INVENTORY_SIZE;i++)
+//	{
+//	inventory[i].storeshipping=cost;	
+//	}
+	smutex_lock(&m);
+ 	storeshipping=cost;
+	
+	if(cost<storeshipping)
+		scond_signal(&c,&m);
+
+
+	smutex_unlock(&m);
 }
 
 /*
@@ -252,6 +423,11 @@ void EStore::
 setStoreDiscount(double discount)
 {
     // TODO: Your code here.
+ smutex_lock(&m);
+    if(discount>discountcost)
+            scond_signal(&c,&m);
+    discountcost=discount;
+    smutex_unlock(&m);
 }
 
 

@@ -1,5 +1,7 @@
 #include "Request.h"
 #include <cstdio>
+#include "EStore.h"
+
 /*
  * ------------------------------------------------------------------
  * add_item_handler --
@@ -21,20 +23,15 @@ add_item_handler(void *args)
 //AddItemReq obj=new AddItemReq;
 
 //obj.handler(args);
-
 struct AddItemReq *a= (AddItemReq*) args;
+//EStore* s= new EStore(false);
+//s->addItem(a->item_id,a->quantity, a->price, a->discount);
+(a->store)->addItem(a->price,a->quantity,a->price,a->discount);
 printf("Handling AddItemReq: item_id -  %d" + a->item_id);
 printf(", quantity -  %d" + a->quantity);
 printf(", price -  %.2f" , a->price);
 printf(", discount -  %.2f" , a->discount);
-
-
-
-
-//printf("Handling AddItemreq:"+ " item_id - "+item_id+", quantity - "+quantity+", price:"+price+", discount - "+discount+);
-
-//struct AddItemReq obj;
-//obj.price=args.price;
+printf("\n");
 
 }
 
@@ -54,9 +51,11 @@ printf(", discount -  %.2f" , a->discount);
 void 
 remove_item_handler(void *args)
 {
-struct RemoveItemReq *b= (RemoveItemReq*) args;
-printf("Handling RemoveItemReq: item_id -  %d" + b->item_id);
 
+struct RemoveItemReq *b= (RemoveItemReq*) args;
+//(b->store)->
+printf("Handling RemoveItemReq: item_id -  %d" + b->item_id);
+printf("\n");
     // TODO: Your code here.
 }
 
@@ -77,9 +76,10 @@ void
 add_stock_handler(void *args)
 {
 struct AddStockReq *a= (AddStockReq*) args;
+//(a->store)->
 printf("Handling AddStockReq: item_id -  %d" + a->item_id);
 printf(", additional_stock %d" + a->additional_stock);
-
+printf("\n");
 
 
     // TODO: Your code here.
@@ -102,9 +102,10 @@ void
 change_item_price_handler(void *args)
 {
 struct ChangeItemPriceReq *a= (ChangeItemPriceReq*) args;
+//(a->store)->
 printf("Handling ChangeItemPriceReq:  item_id -  %d" + a->item_id);
 printf(", new_price -  %.2f" , a->new_price);
- 
+ printf("\n");
    // TODO: Your code here.
 }
 
@@ -125,9 +126,10 @@ void
 change_item_discount_handler(void *args)
 {
 struct ChangeItemDiscountReq *a= (ChangeItemDiscountReq*) args;
+//(a->store)->
 printf("Handling ChangeItemDiscountReq:  item_id -  %d" + a->item_id);
 printf(", new_discount -  %.2f" , a->new_discount);
- 
+ printf("\n");
 
 
     // TODO: Your code here.
@@ -150,8 +152,9 @@ void
 set_shipping_cost_handler(void *args)
 {
 struct SetShippingCostReq *a= (SetShippingCostReq*) args;
+//(a->store)->
 printf("Handling SetShippingCostReq:  new_cost -  %.2f" , a->new_cost);
- 
+ printf("\n");
 
 
     // TODO: Your code here.
@@ -175,7 +178,7 @@ set_store_discount_handler(void *args)
 {
 struct SetStoreDiscountReq *a= (SetStoreDiscountReq*) args;
 printf("Handling SetStoreDiscountReq:  new_discount -  %.2f" , a->new_discount);
-
+printf("\n");
 
     // TODO: Your code here.
 }
@@ -197,9 +200,10 @@ void
 buy_item_handler(void *args)
 {
 struct BuyItemReq *a= (BuyItemReq*) args;
+//(a->store)->
 printf("Handling BuyItemReq:  item_id -  %d" + a->item_id);
 printf(", budget - %.2f" , a->budget);
-
+printf("\n");
 
 
 
