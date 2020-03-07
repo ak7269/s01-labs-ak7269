@@ -10,8 +10,8 @@ TaskQueue()
 {
     // TODO: Your code here.
   
- smutex_init(&m);
- scond_init(&c);
+ smutex_init(&mut);
+ scond_init(&cond);
 
  
 }
@@ -20,8 +20,8 @@ TaskQueue::
 ~TaskQueue()
 {
 
- smutex_destroy(&m);
- scond_destroy(&c);
+ smutex_destroy(&mut);
+ scond_destroy(&cond);
  
        
 	// TODO: Your code here.
@@ -90,10 +90,10 @@ empty()
 void TaskQueue::
 enqueue(Task task)
 {
-   smutex_lock(&m);
-    q.push(task);
-    scond_signal(&c,&m);  
-    smutex_unlock(&m);
+    smutex_lock(&mut);
+      q.push(task);
+    scond_signal(&cond,&mut);  
+    smutex_unlock(&mut);
 }
     
 
@@ -113,19 +113,14 @@ Task TaskQueue::
 dequeue(void)
 {
     // TODO: Your code here.
-    smutex_lock(&m);
+    smutex_lock(&mut);
     while(q.empty())
     {
-           scond_wait(&c,&m);
+           scond_wait(&cond,&mut);
     }
-    Task t= q.front();
-    q.pop();
-   // handler_t arg;
- //  Task t;
-//   t.handler(t.arg);
- 
-   smutex_unlock(&m);
-  return t;
-   // return Task(); // Keep compiler happy until routine done.
+    Task temp = q.front();
+    q.pop(); 
+   smutex_unlock(&mut);
+   return temp; // Keep compiler happy until routine done.
 }
 

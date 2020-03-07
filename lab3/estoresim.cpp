@@ -48,13 +48,14 @@ supplierGenerator(void* arg)
     // TODO: Your code here
     Simulation* sim=(Simulation*)arg;
     SupplierRequestGenerator gen1{&sim->supplierTasks};
-    int max=sim->maxTasks;
-    for(int i=0;i<max;i++) {
-	    gen1.enqueueTasks(max,&sim->store); 
+    int maxtask=sim->maxTasks;
+    for(int i=0;i<maxtask;i++) {
+	    gen1.enqueueTasks(maxtask,&sim->store); 
     }
 
     gen1.enqueueStops(sim->numSuppliers);
-    exit(0); // Keep compiler happy.
+
+    exit(0);
 }
 
 /*
@@ -86,19 +87,22 @@ customerGenerator(void* arg)
 {
     // TODO: Your code here
     Simulation* sim=(Simulation*)arg;
-    bool res=(sim->store).fineModeEnabled();
-    CustomerRequestGenerator gen1{&sim->supplierTasks,res};
-    int max=sim->maxTasks;
-     for(int i=0;i<max;i++){
-	      gen1.enqueueTasks(max,&sim->store);
+
+    bool a=(sim->store).fineModeEnabled();
+
+    CustomerRequestGenerator gen1{&sim->supplierTasks,a};
+
+    int maximum=sim->maxTasks;
+    int i=0;
+     while(i<maximum){
+	      gen1.enqueueTasks(maximum,&sim->store);
+	      i++;
       }
 
    gen1.enqueueStops(sim->numSuppliers);
 
-    exit(0);
-     // Keep compiler happy.
-
-}
+    exit(0);//exit 
+    }
 
 /*
  * ------------------------------------------------------------------
@@ -119,15 +123,17 @@ supplier(void* arg)
 {
     // TODO: Your code here. 
     Simulation* sim=(Simulation*)arg;
-    int numSupply=sim->numSuppliers;
-    for(int i=0;i<numSupply;i++){
-	    Task t= (sim->supplierTasks).dequeue();
-	    t.handler(t.arg);
+
+    int numberS=sim->numSuppliers;
+
+    for(int i=0;i<numberS;i++)
+    {
+	    Task r= (sim->supplierTasks).dequeue();
+	    r.handler(r.arg);
 	     
     }
     return NULL;
-    // Keep compiler happy.
-}
+   }
 /*
  * ------------------------------------------------------------------
  * customer --
@@ -147,10 +153,12 @@ customer(void* arg)
 {
     // TODO: Your code here.
      Simulation* sim=(Simulation*)arg;
-     int numCust = sim->numCustomers;
-     for(int i=0;i<numCust;i++){
-	      Task t = (sim->customerTasks).dequeue();
-	      t.handler(t.arg);
+
+     int numCustomer = sim->numCustomers;
+
+     for(int i=0;i<numCustomer;i++){
+	      Task r = (sim->customerTasks).dequeue();
+	      r.handler(r.arg);
      }
    return NULL;// Keep compiler happy.
 }
@@ -184,33 +192,41 @@ startSimulation(int numSuppliers, int numCustomers, int maxTasks, bool useFineMo
     // TODO: Your code here.
 
      bool fineMode=useFineMode;
-
      Simulation sim(fineMode);
-     sim.maxTasks=maxTasks; 
+
      sim.numSuppliers=numSuppliers;
+
+     sim.maxTasks=maxTasks; 
+
      sim.numCustomers=numCustomers;
     
-     sthread_t sG,cG;
-     sthread_t * customers = new sthread_t[numCustomers];
-     sthread_t * suppliers = new sthread_t[numSuppliers];  
+     sthread_t st,ct;
 
-     //Simulation * sim_on_heap = new Simulation(fineMode);
+    sthread_t * suppliers = new sthread_t[numSuppliers];  
+    sthread_t * customers = new sthread_t[numCustomers];
 
-     sthread_create (&sG,supplierGenerator,&sim);
-     sthread_create (&cG,customerGenerator,&sim);
-    //create two arrays of numS and numC supplier and customer threads 
-     for(int i=0;i<numSuppliers;i++)
-	     sthread_create (&customers[i],customer,&sim);
-     for(int i=0;i<numCustomers;i++)
-	     sthread_create (&suppliers[i],supplier,&sim);
 
-     sthread_join(sG);
-     sthread_join(cG);
+     sthread_create (&st,supplierGenerator,&sim);
+     sthread_create (&ct,customerGenerator,&sim);
+    
+     for(int j=0;j<numSuppliers;j++){
+	     sthread_create (&customers[j],customer,&sim);
+     }
+     for(int j=0;j<numCustomers;j++){
+	     sthread_create (&suppliers[j],supplier,&sim);
+     }
 
-    for(int i=0;i<numSuppliers;i++)
-     sthread_join(suppliers[i]);
-    for(int i=0;i<numCustomers;i++)
-     sthread_join(customers[i]);
+     sthread_join(st);
+     sthread_join(ct);
+
+    for(int j=0;j<numSuppliers;j++)
+    {
+	    sthread_join(suppliers[j]);
+    }
+    for(int j=0;j<numCustomers;j++)
+    {
+	    sthread_join(customers[j]);
+    }
 
 	    
 }
