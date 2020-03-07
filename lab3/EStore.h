@@ -31,6 +31,8 @@ class Item {
     int quantity;
     double price;
     double discount;
+     smutex_t item_lock[INVENTORY_SIZE];
+
 
     Item();
     ~Item();
@@ -67,16 +69,16 @@ class Item {
  */
 class EStore {
     private:
-    Item inventory[INVENTORY_SIZE];
-     const bool fineMode;
-    // TODO: More needed here.
-   // int discount=0;
-    double storeshipping=3;
-    double discountcost=0;
-    smutex_t  m;
-    scond_t c; 
+   Item inventory[INVENTORY_SIZE];
+    const bool fineMode;
+    // TODO: More needed here
+    // smutex_t m[INVENTORY_SIZE];
+     smutex_t m;
+     scond_t c;
+     double storeDis=0;
+     double shipCost=3;
+     //smutex_t item_lock[INVENTORY_SIZE];
 
-   // smutex_t itemLock[INVENTORY_SIZE];
     public:
 
     explicit EStore(bool enableFineMode);
