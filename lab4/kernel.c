@@ -110,7 +110,8 @@ void kernel(const char* command) {
         }
     }
 #endif
-    
+    virtual_memory_map(kernel_pagetable, 0, 0, 0x100000, PTE_P|PTE_W,NULL);
+    virtual_memory_map(kernel_pagetable, (uintptr_t)console, (uintptr_t)console, PAGESIZE, PTE_P|PTE_W|PTE_U,NULL);
     // Switch to the first process using run()
     run(&processes[1]);
 }
