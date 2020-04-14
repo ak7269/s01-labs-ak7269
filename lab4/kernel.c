@@ -122,20 +122,63 @@ void kernel(const char* command) {
 //    This loads the application's code and data into memory, sets its
 //    %rip and %rsp, gives it a stack page, and marks it as runnable.
 
+
+int8_t own;
+
+x86_64_pagetable* getFreePage (void) {
+            for(int pn = 0; pn < NPAGES; pn++){
+                    if(pageinfo[pn].refcount < 1 && pageinfo[pn].owner == PO_FREE){
+                            pageinfo[pn].refcount++;
+                           // pageinfo[pn].owner = current->p_pid;
+			   pageinfo[pn].owner=own;
+                            log_printf("REFCOUNT: %p", current->p_pid);
+                            return (x86_64_pagetable*)PAGEADDRESS(pn);
+                    }
+            }
+            // no free page found:
+   return NULL;
+  }
+
+x86_64_pagetable*  copy_pagetable(x86_64_pagetable* pagetable, int8_t owner){
+		own=owner;
+
+             x86_64_pagetable* page1;
+
+             page1 = (getFreePage());
+
+             memset(page1,0,PAGESIZE);
+
+             log_printf("OWNER %d",owner);
+		
+			   size_t sizef=MEMSIZE_PHYSICAL-PROC_START_ADDR;
+           size_t procadd=PROC_START_ADDR;
+          virtual_memory_map(page1, 0, 0, procadd, PTE_P|PTE_W, getFreePage);
+
+          virtual_memory_map(page1, (uintptr_t)console, (uintptr_t)console, PAGESIZE, PTE_P|PTE_W|PTE_U,getFreePage);
+
+          virtual_memory_map(page1,procadd,procadd,sizef,PTE_P|PTE_W,getFreePage);
+
+          check_page_table_mappings(page1);
+
+
+        return page1;
+ }
+
+
 void process_setup(pid_t pid, int program_number) {
     process_init(&processes[pid], 0);
-    processes[pid].p_pagetable = kernel_pagetable;
-    ++pageinfo[PAGENUMBER(kernel_pagetable)].refcount;
-    int r = program_load(&processes[pid], program_number, NULL);
+    processes[pid].p_pagetable = copy_pagetable(kernel_pagetable,pid);
+ //   ++pageinfo[PAGENUMBER(kernel_pagetable)].refcount;
+       int r = program_load(&processes[pid], program_number, NULL);
     assert(r >= 0);
     processes[pid].p_registers.reg_rsp = PROC_START_ADDR + PROC_SIZE * pid;
     uintptr_t stack_page = processes[pid].p_registers.reg_rsp - PAGESIZE;
-    assign_physical_page(stack_page, pid);
+   assign_physical_page(stack_page, pid);
+   //int pa=getFreeAddress(pid);
     virtual_memory_map(processes[pid].p_pagetable, stack_page, stack_page,
                        PAGESIZE, PTE_P | PTE_W | PTE_U, NULL);
     processes[pid].p_state = P_RUNNABLE;
 }
-
 
 // assign_physical_page(addr, owner)
 //    Allocates the page with physical address `addr` to the given owner.
@@ -152,7 +195,9 @@ int assign_physical_page(uintptr_t addr, int8_t owner) {
         pageinfo[PAGENUMBER(addr)].owner = owner;
         return 0;
     }
+
 }
+
 
 
 // exception(reg)
