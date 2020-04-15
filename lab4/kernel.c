@@ -166,7 +166,6 @@ x86_64_pagetable*  copy_pagetable(x86_64_pagetable* pagetable, int8_t owner){
         return page1;
  }
 
-
 void process_setup(pid_t pid, int program_number) {
     process_init(&processes[pid], 0);
 
@@ -177,14 +176,27 @@ void process_setup(pid_t pid, int program_number) {
  //   ++pageinfo[PAGENUMBER(kernel_pagetable)].refcount;
        int r = program_load(&processes[pid], program_number, NULL);
     assert(r >= 0);
-    processes[pid].p_registers.reg_rsp = PROC_START_ADDR + PROC_SIZE * pid;
-  // processes[pid].p_registers.reg_rsp = MEMSIZE_VIRTUAL;
+   // processes[pid].p_registers.reg_rsp = PROC_START_ADDR + PROC_SIZE * pid;
+   processes[pid].p_registers.reg_rsp = MEMSIZE_VIRTUAL;
 
-    uintptr_t stack_page = processes[pid].p_registers.reg_rsp - PAGESIZE;
-   assign_physical_page(stack_page, pid);
- // uintptr_t pa=page_alloc_unused(pid);
-    virtual_memory_map(processes[pid].p_pagetable, stack_page, stack_page,
-                       PAGESIZE, PTE_P | PTE_W | PTE_U, NULL);
+    uintptr_t stack_page;
+	   // = processes[pid].p_registers.reg_rsp - PAGESIZE;
+	   
+	for(int pa=0; pa<MEMSIZE_PHYSICAL; pa=pa+PAGESIZE)
+	{
+		 if (pageinfo[PAGENUMBER(pa)].refcount == 0 && pageinfo[PAGENUMBER(pa)].owner == PO_FREE) {
+			 stack_page=pa;
+			 pageinfo[PAGENUMBER(pa)].refcount++;
+			 pageinfo[PAGENUMBER(pa)].owner=pid;
+			 break;
+		 }
+	
+	}
+
+  assign_physical_page(stack_page, pid);
+ // uintptr_t pa=(uintptr_t)getFreePage();
+    virtual_memory_map(processes[pid].p_pagetable, MEMSIZE_VIRTUAL-PAGESIZE, stack_page,
+                       PAGESIZE, PTE_P | PTE_W | PTE_U, getFreePage);
     processes[pid].p_state = P_RUNNABLE;
 }
 
@@ -204,31 +216,6 @@ int assign_physical_page(uintptr_t addr, int8_t owner) {
         return 0;
     }
 
-}
-//uintptr_t page_alloc_unused1(void) {
-   // for (int pn = 0; pn < NPAGES; ++pn)
-     //   if (pageinfo[pn].refcount == 0) {
-	//	pageinfo[pn].refcount++;
-         //   return PAGEADDRESS(pn);
-      //  }
-   // return 0;
-//}
-
-uintptr_t page_address_free(int8_t owner) {
-          for (uintptr_t pa = 0; pa < MEMSIZE_PHYSICAL; pa += PAGESIZE) {
-                if (pageinfo[PAGENUMBER(pa)].refcount < 1 && pageinfo[PAGENUMBER(pa)].owner == PO_FREE) {
-                        if (assign_physical_page(pa, owner) != -1){
-			//	assign_physical_page(pa,owner);
-                      			    // pageinfo[PAGENUMBER(pa)].refcount+=1;
-			    // pageinfo[PAGENUMBER(pa)].owner == owner;
-                                return pa;
-			}
-                        else
-                                return -1;
-                }  // end if
-        } // end for
-
-              return -1; // nothing found, out of physical memory
 }
 
 // exception(reg)
@@ -306,7 +293,7 @@ void exception(x86_64_registers* reg) {
 
       else
       {
-	      // console_printf(CPOS(24, 0), 0x0C00,"Out of physical memory!\n"); 
+	console_printf(CPOS(24, 0), 0x0C00,"Out of physical memory!\n"); 
 	 current->p_registers.reg_rax = -1;
       }
 
