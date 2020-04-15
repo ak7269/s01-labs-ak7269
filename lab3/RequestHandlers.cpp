@@ -19,22 +19,17 @@ void
 add_item_handler(void *args)
 {
     // TODO: Your code here.
-// AddItemReq.price=args.price;
-//AddItemReq obj=new AddItemReq;
+    struct AddItemReq *a=(AddItemReq*) args;
+   (a->store)->addItem(a->item_id, a->quantity, a->price, a->discount);//calling the method 
+    printf("Handling AddItemReq: ");
+    printf(", quantity -  %d" + a->quantity);
+    printf(", price -  %lf" , a->price);
+    printf(", discount -  %lf" , a->discount);
+    printf(", item_id- %d ", a->item_id);
 
-//obj.handler(args);
-struct AddItemReq *a= (AddItemReq*) args;
-//EStore* s= new EStore(false);
-//s->addItem(a->item_id,a->quantity, a->price, a->discount);
-(a->store)->addItem(a->price,a->quantity,a->price,a->discount);
-printf("Handling AddItemReq: item_id -  %d" + a->item_id);
-printf(", quantity -  %d" + a->quantity);
-printf(", price -  %.2f" , a->price);
-printf(", discount -  %.2f" , a->discount);
-printf("\n");
-
+    printf("\n");
+    a=NULL;
 }
-
 /*
  * ------------------------------------------------------------------
  * remove_item_handler --
@@ -51,14 +46,13 @@ printf("\n");
 void 
 remove_item_handler(void *args)
 {
-
-struct RemoveItemReq *b= (RemoveItemReq*) args;
-//(b->store)->
-printf("Handling RemoveItemReq: item_id -  %d" + b->item_id);
-printf("\n");
     // TODO: Your code here.
+    struct RemoveItemReq *b= (RemoveItemReq*) args;
+    (b->store)->removeItem(b->item_id);
+    printf("Handling RemoveItemReq: item_id -  %d " + b->item_id);
+    printf("\n");
+	b=NULL;
 }
-
 /*
  * ------------------------------------------------------------------
  * add_stock_handler --
@@ -75,16 +69,14 @@ printf("\n");
 void 
 add_stock_handler(void *args)
 {
-struct AddStockReq *a= (AddStockReq*) args;
-//(a->store)->
-printf("Handling AddStockReq: item_id -  %d" + a->item_id);
-printf(", additional_stock %d" + a->additional_stock);
-printf("\n");
-
-
     // TODO: Your code here.
+    	struct AddStockReq *c= (AddStockReq*) args;
+	(c->store)->addStock(c->item_id,c->additional_stock);
+	printf("Handling AddStockReq: item_id -  %d" + c->item_id);
+	printf(", additional_stock %d" + c->additional_stock);
+	printf("\n");
+	c=NULL;
 }
-
 /*
  * ------------------------------------------------------------------
  * change_item_price_handler --
@@ -101,12 +93,13 @@ printf("\n");
 void 
 change_item_price_handler(void *args)
 {
-struct ChangeItemPriceReq *a= (ChangeItemPriceReq*) args;
-//(a->store)->
-printf("Handling ChangeItemPriceReq:  item_id -  %d" + a->item_id);
-printf(", new_price -  %.2f" , a->new_price);
- printf("\n");
-   // TODO: Your code here.
+    // TODO: Your code here.
+    struct ChangeItemPriceReq *d= (ChangeItemPriceReq*) args;
+    (d->store)->priceItem(d->item_id,d->new_price);
+    printf("Handling ChangeItemPriceReq:  item_id -  %d" + d->item_id);
+    printf(", new_price -  %lf" , d->new_price);
+    printf("\n"); 
+    d=NULL;
 }
 
 /*
@@ -125,16 +118,14 @@ printf(", new_price -  %.2f" , a->new_price);
 void 
 change_item_discount_handler(void *args)
 {
-struct ChangeItemDiscountReq *a= (ChangeItemDiscountReq*) args;
-//(a->store)->
-printf("Handling ChangeItemDiscountReq:  item_id -  %d" + a->item_id);
-printf(", new_discount -  %.2f" , a->new_discount);
- printf("\n");
-
-
     // TODO: Your code here.
+    struct ChangeItemDiscountReq *e= (ChangeItemDiscountReq*) args;
+    (e->store)->discountItem(e->item_id,e->new_discount);
+    printf("Handling ChangeItemDiscountReq: item_id - %d" + e->item_id);
+    printf(", new_discount - %lf" , e->new_discount);
+    printf("\n"); 
+    e=NULL;
 }
-
 /*
  * ------------------------------------------------------------------
  * set_shipping_cost_handler --
@@ -151,15 +142,14 @@ printf(", new_discount -  %.2f" , a->new_discount);
 void 
 set_shipping_cost_handler(void *args)
 {
-struct SetShippingCostReq *a= (SetShippingCostReq*) args;
-//(a->store)->
-printf("Handling SetShippingCostReq:  new_cost -  %.2f" , a->new_cost);
- printf("\n");
-
-
     // TODO: Your code here.
-}
+    struct SetShippingCostReq *f= (SetShippingCostReq*) args;
+    (f->store)->setShippingCost(f->new_cost);
+    printf("Handling SetShippingCostReq: new_cost - %lf" , f->new_cost);
+    printf("\n"); 
+    f=NULL;
 
+}
 /*
  * ------------------------------------------------------------------
  * set_store_discount_handler --
@@ -176,13 +166,13 @@ printf("Handling SetShippingCostReq:  new_cost -  %.2f" , a->new_cost);
 void
 set_store_discount_handler(void *args)
 {
-struct SetStoreDiscountReq *a= (SetStoreDiscountReq*) args;
-printf("Handling SetStoreDiscountReq:  new_discount -  %.2f" , a->new_discount);
-printf("\n");
-
     // TODO: Your code here.
+    struct SetStoreDiscountReq *g= (SetStoreDiscountReq*) args;
+    (g->store)->setStoreDiscount(g->new_discount);
+    printf("Handling SetStoreDiscountReq: new_discount - %lf" , g->new_discount);
+    printf("\n");
+    g=NULL;
 }
-
 /*
  * ------------------------------------------------------------------
  * buy_item_handler --
@@ -199,17 +189,14 @@ printf("\n");
 void
 buy_item_handler(void *args)
 {
-struct BuyItemReq *a= (BuyItemReq*) args;
-//(a->store)->
-printf("Handling BuyItemReq:  item_id -  %d" + a->item_id);
-printf(", budget - %.2f" , a->budget);
-printf("\n");
-
-
-
     // TODO: Your code here.
+    struct BuyItemReq *h= (BuyItemReq*) args;
+    (h->store)->buyItem(h->item_id,h->budget);
+    printf("Handling BuyItemReq: item_id - %d" + h->item_id);
+    printf( ", budget - %lf" , h->budget);
+    printf("\n");
+    h=NULL;
 }
-
 /*
  * ------------------------------------------------------------------
  * buy_many_items_handler --
@@ -226,13 +213,16 @@ printf("\n");
 void
 buy_many_items_handler(void *args)
 {
-//struct BuyManyItemsReq *a= (BuyManyItemsReq*) args;
-//printf("Handling BuyManyItemsReq: item_ids -  %d" + a->item_ids);
-//printf(", budget - %s" + a->budget);
-
-  // TODO: Your code here.
+    // TODO: Your code here.
+ 
+    struct BuyManyItemsReq *j= (BuyManyItemsReq*) args;
+   (j->store)->buyManyItems(&j->item_ids,j->budget);
+    printf("Handling BuyManyItemsReq: item_ids - ");
+   for(int i=0; i < (j->item_ids).size(); i++) 
+	   printf("%d ", j->item_ids[i]);
+   printf("\n");
+   j=NULL;
 }
-
 /*
  * ------------------------------------------------------------------
  * stop_handler --
@@ -247,14 +237,7 @@ buy_many_items_handler(void *args)
 void 
 stop_handler(void* args)
 {
-//strcut AddItemReq *a= (AddItemReq*) args;
-//printf("AddItemReq item_id: %d"+ a->item_id);
-//printf("quantity: %d"+  a->quantity);
-//printf("price: %s"+ a->price);
-//printf(",discount: %s"+ a->discount);
-
-printf("Handling StopHandlerReq: Quitting");
-
     // TODO: Your code here.
+    printf("Handler StopHandlerReq: Quitting");
+    printf("\n");
 }
-

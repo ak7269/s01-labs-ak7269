@@ -24,8 +24,8 @@ struct Task {
 class TaskQueue {
     private:
     std::queue<Task> q;
-    smutex_t m;
-    scond_t c;
+    smutex_t mut;
+    scond_t cond;
      
  
     public:
