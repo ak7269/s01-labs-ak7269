@@ -110,10 +110,11 @@ void kernel(const char* command) {
         }
     }
 #endif
-    virtual_memory_map(kernel_pagetable, 0, 0, 0x100000, PTE_P|PTE_W,NULL);
+
+	//Step1
+    virtual_memory_map(kernel_pagetable, 0, 0, PROC_START_ADDR, PTE_P|PTE_W,NULL);
     virtual_memory_map(kernel_pagetable, (uintptr_t)console, (uintptr_t)console, PAGESIZE, PTE_P|PTE_W|PTE_U,NULL);
-    // Switch to the first process using run()
-    run(&processes[1]);
+        run(&processes[1]);
 }
 
 
@@ -125,78 +126,75 @@ void kernel(const char* command) {
 
 //int8_t own;
 
-x86_64_pagetable* getFreePage (void) {
-            for(int pn = 0; pn < NPAGES; pn++){
-                    if(pageinfo[pn].refcount < 1 && pageinfo[pn].owner == PO_FREE){
-                            pageinfo[pn].refcount++;
-                            pageinfo[pn].owner = current->p_pid;
-			    memset((x86_64_pagetable*) PAGEADDRESS(pn),0,sizeof(x86_64_pagetable));
-			  // pageinfo[pn].owner=own;
+x86_64_pagetable* freealloc (void) {
+	int nump;
+        for(nump = 0; nump < NPAGES; nump++){
+		if(pageinfo[nump].refcount == 0){
+			if(pageinfo[nump].owner==PO_FREE)
+			{
+                      	  	pageinfo[nump].owner = current->p_pid;
+				pageinfo[nump].refcount=pageinfo[nump].refcount+1;
 
-                           // log_printf("REFCOUNT: %p", current->p_pid);
-                            return (x86_64_pagetable*) PAGEADDRESS(pn);
+
+				uintptr_t address=PAGEADDRESS(nump); 
+				size_t size=sizeof(x86_64_pagetable);
+
+				memset((x86_64_pagetable*) address,0,size);
+				return (x86_64_pagetable*)address;
+			}
                     }
             }
-            // no free page found:
-   return NULL;
+          return NULL;//if we dont get any free pages the function returns NULL
   }
 
 x86_64_pagetable*  copy_pagetable(x86_64_pagetable* pagetable, int8_t owner){
-	//	own=owner;
 
-             x86_64_pagetable* page1;
+             x86_64_pagetable* l1;
+	     l1 =freealloc();
+	     size_t sizefirst=PROC_START_ADDR;
+	     virtual_memory_map(l1, 0, 0,sizefirst, PTE_P|PTE_W, freealloc);
+	     virtual_memory_map(l1, (uintptr_t)console, (uintptr_t)console, PAGESIZE, PTE_P | PTE_W | PTE_U ,freealloc);
+	     check_page_table_mappings(l1);//checking the page table mappings 
 
-             page1 = (getFreePage());
-
-           //  memset(page1,0,PAGESIZE);
-
-           //  log_printf("OWNER %d",owner);
-		
-		//	  size_t sizef=MEMSIZE_PHYSICAL-PROC_START_ADDR;
-         //  size_t procadd=PROC_START_ADDR;
-          virtual_memory_map(page1, 0, 0,PROC_START_ADDR, PTE_P|PTE_W, getFreePage);
-
-          virtual_memory_map(page1, (uintptr_t)console, (uintptr_t)console, PAGESIZE, PTE_P | PTE_W | PTE_U ,getFreePage);
-
-        //  virtual_memory_map(page1,procadd,procadd,sizef,PTE_P | PTE_W ,getFreePage);
-
-       //  check_page_table_mappings(page1);
-
-
-        return page1;
+          return l1;
  }
 
 void process_setup(pid_t pid, int program_number) {
     process_init(&processes[pid], 0);
-
-    current=&processes[pid];
     current->p_pid=pid;
-
     processes[pid].p_pagetable = copy_pagetable(kernel_pagetable,pid);
  //   ++pageinfo[PAGENUMBER(kernel_pagetable)].refcount;
-       int r = program_load(&processes[pid], program_number, NULL);
+    int r = program_load(&processes[pid], program_number, NULL);
     assert(r >= 0);
    // processes[pid].p_registers.reg_rsp = PROC_START_ADDR + PROC_SIZE * pid;
-   processes[pid].p_registers.reg_rsp = MEMSIZE_VIRTUAL;
+    processes[pid].p_registers.reg_rsp = MEMSIZE_VIRTUAL;
 
+   // uintptr_t stack_page=processes[pid].p_registers.reg_rsp - PAGESIZE;
     uintptr_t stack_page;
-	   // = processes[pid].p_registers.reg_rsp - PAGESIZE;
+    
 	   
-	for(int pa=0; pa<MEMSIZE_PHYSICAL; pa=pa+PAGESIZE)
+	for(int phya=0; phya<MEMSIZE_PHYSICAL; phya=phya+PAGESIZE)
 	{
-		 if (pageinfo[PAGENUMBER(pa)].refcount == 0 && pageinfo[PAGENUMBER(pa)].owner == PO_FREE) {
-			 stack_page=pa;
-			 pageinfo[PAGENUMBER(pa)].refcount++;
-			 pageinfo[PAGENUMBER(pa)].owner=pid;
-			 break;
+	
+		 if (pageinfo[PAGENUMBER(phya)].refcount == 0){
+			 if(pageinfo[PAGENUMBER(phya)].owner == PO_FREE) {
+
+			 	stack_page=phya;
+
+				pageinfo[PAGENUMBER(phya)].refcount++;
+			        pageinfo[PAGENUMBER(phya)].owner=pid;
+				
+				break;
+			 }
+				
 		 }
 	
 	}
-
-  assign_physical_page(stack_page, pid);
- // uintptr_t pa=(uintptr_t)getFreePage();
+  
+ 	 assign_physical_page(stack_page, pid);
+ // uintptr_t physicala=(uintptr_t)getFreePage();
     virtual_memory_map(processes[pid].p_pagetable, MEMSIZE_VIRTUAL-PAGESIZE, stack_page,
-                       PAGESIZE, PTE_P | PTE_W | PTE_U, getFreePage);
+                       PAGESIZE, PTE_P | PTE_W | PTE_U, freealloc);
     processes[pid].p_state = P_RUNNABLE;
 }
 
@@ -217,6 +215,76 @@ int assign_physical_page(uintptr_t addr, int8_t owner) {
     }
 
 }
+
+
+
+
+
+pid_t fork(void)
+{
+	int8_t i;
+	for(i=1;i<NPROC;i++)
+	{
+		if(processes[i].p_state==P_FREE)
+		{
+			processes[i].p_state=P_RUNNABLE;
+
+			break;
+		}
+		else
+			return -1;
+	}
+	processes[i].p_pagetable = copy_pagetable(current->p_pagetable,i);
+
+
+	 if (!processes[i].p_pagetable)
+            {
+    	             return -1;
+    	    }
+	if(processes[i].p_pagetable==NULL)
+	{
+		return -1;
+	}
+
+	for(uintptr_t virtuala=0; virtuala< MEMSIZE_VIRTUAL; virtuala=virtuala+PAGESIZE)//copying all the data belonging to the parent 
+	{
+		vamapping vmmmap = virtual_memory_lookup(current->p_pagetable,virtuala);
+		if(vmmmap.perm & PTE_U )
+		{
+			
+			uintptr_t page=(uintptr_t) freealloc;
+
+			if(!(page))
+			{
+				return -1;
+			}
+
+			memcpy((void*)page, (void*)vmmmap.pa, PAGESIZE);
+			virtual_memory_map(processes[i].p_pagetable,virtuala,page,PAGESIZE,vmmmap.perm , freealloc);
+				
+		}
+
+
+	}
+
+	processes[i].p_registers=current->p_registers;
+//	processes[current->p_pid].p_registers.reg_rax=i;
+	current -> p_registers.reg_rax = i;
+	processes[i].p_registers.reg_rax=0;
+
+	return i;
+
+}
+
+
+
+
+
+
+
+
+
+
 
 // exception(reg)
 //    Exception handler (for interrupts, traps, and faults).
@@ -280,7 +348,7 @@ void exception(x86_64_registers* reg) {
 
     case INT_SYS_PAGE_ALLOC: {
 	uintptr_t page= -1;
-	page =(uintptr_t) getFreePage();
+	page =(uintptr_t) freealloc();
 
 	if(page)
 	{
@@ -305,6 +373,11 @@ void exception(x86_64_registers* reg) {
         ++ticks;
         schedule();
         break;                  /* will not be reached */
+
+    case INT_SYS_FORK:
+	// Step 5: fork()
+	fork();
+        break;
 
     case INT_PAGEFAULT: {
         // Analyze faulting address and access type.
