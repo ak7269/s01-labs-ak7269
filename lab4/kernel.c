@@ -124,7 +124,6 @@ void kernel(const char* command) {
 //    %rip and %rsp, gives it a stack page, and marks it as runnable.
 
 
-//int8_t own;
 
 x86_64_pagetable* freealloc (void) {
 	int nump;
@@ -139,7 +138,7 @@ x86_64_pagetable* freealloc (void) {
 				uintptr_t address=PAGEADDRESS(nump); 
 				size_t size=sizeof(x86_64_pagetable);
 
-				memset((x86_64_pagetable*) address,0,size);
+				memset((x86_64_pagetable*)address,0,size);
 				return (x86_64_pagetable*)address;
 			}
                     }
@@ -170,30 +169,29 @@ void process_setup(pid_t pid, int program_number) {
     processes[pid].p_registers.reg_rsp = MEMSIZE_VIRTUAL;
 
    // uintptr_t stack_page=processes[pid].p_registers.reg_rsp - PAGESIZE;
-    uintptr_t stack_page;
+    uintptr_t stackp;
     
 	   
 	for(int phya=0; phya<MEMSIZE_PHYSICAL; phya=phya+PAGESIZE)
 	{
-	
-		 if (pageinfo[PAGENUMBER(phya)].refcount == 0){
-			 if(pageinfo[PAGENUMBER(phya)].owner == PO_FREE) {
+	       	if (pageinfo[PAGENUMBER(phya)].refcount == 0)
+		{
+			 if(pageinfo[PAGENUMBER(phya)].owner == PO_FREE) 
+			 {	
+				stackp=phya;
+			       	pageinfo[PAGENUMBER(phya)].owner=pid;
+				++pageinfo[PAGENUMBER(phya)].refcount;
 
-			 	stack_page=phya;
-
-				pageinfo[PAGENUMBER(phya)].refcount++;
-			        pageinfo[PAGENUMBER(phya)].owner=pid;
 				
 				break;
 			 }
-				
-		 }
-	
+		}
 	}
   
- 	 assign_physical_page(stack_page, pid);
+     assign_physical_page(stackp, pid);
  // uintptr_t physicala=(uintptr_t)getFreePage();
-    virtual_memory_map(processes[pid].p_pagetable, MEMSIZE_VIRTUAL-PAGESIZE, stack_page,
+    uintptr_t virtuala=MEMSIZE_VIRTUAL-PAGESIZE;
+    virtual_memory_map(processes[pid].p_pagetable, virtuala, stackp,
                        PAGESIZE, PTE_P | PTE_W | PTE_U, freealloc);
     processes[pid].p_state = P_RUNNABLE;
 }
@@ -218,61 +216,42 @@ int assign_physical_page(uintptr_t addr, int8_t owner) {
 
 
 
-
-
 pid_t fork(void)
 {
-	int8_t i;
-	for(i=1;i<NPROC;i++)
+	int8_t children;
+	for(children=1;children<NPROC;children++)
 	{
-		if(processes[i].p_state==P_FREE)
+		if(processes[children].p_state==P_FREE)
 		{
-			processes[i].p_state=P_RUNNABLE;
+			processes[children].p_state=P_RUNNABLE;
+			processes[children].p_pagetable = copy_pagetable(current->p_pagetable,children);
+			if (!processes[children].p_pagetable)
+        		 {
+        		      return -1;
+        		 }
 
 			break;
 		}
-		else
-			return -1;
-	}
-	processes[i].p_pagetable = copy_pagetable(current->p_pagetable,i);
-
-
-	 if (!processes[i].p_pagetable)
-            {
-    	             return -1;
-    	    }
-	if(processes[i].p_pagetable==NULL)
-	{
 		return -1;
 	}
-
-	for(uintptr_t virtuala=0; virtuala< MEMSIZE_VIRTUAL; virtuala=virtuala+PAGESIZE)//copying all the data belonging to the parent 
+	uintptr_t virtuala;
+	for(virtuala=0; virtuala< MEMSIZE_VIRTUAL; virtuala=virtuala+PAGESIZE)//copying all the data belonging to the parent 
 	{
 		vamapping vmmmap = virtual_memory_lookup(current->p_pagetable,virtuala);
 		if(vmmmap.perm & PTE_U )
 		{
-			
-			uintptr_t page=(uintptr_t) freealloc;
-
-			if(!(page))
-			{
+			uintptr_t freep=(uintptr_t) freealloc;
+			if(!(freep))//if it is not a valid freepage
 				return -1;
-			}
-
-			memcpy((void*)page, (void*)vmmmap.pa, PAGESIZE);
-			virtual_memory_map(processes[i].p_pagetable,virtuala,page,PAGESIZE,vmmmap.perm , freealloc);
-				
+			memcpy((void*)freep, (void*)vmmmap.pa, PAGESIZE);
+			virtual_memory_map(processes[children].p_pagetable,virtuala,freep,PAGESIZE,vmmmap.perm,freealloc);
 		}
-
-
 	}
 
-	processes[i].p_registers=current->p_registers;
-//	processes[current->p_pid].p_registers.reg_rax=i;
-	current -> p_registers.reg_rax = i;
-	processes[i].p_registers.reg_rax=0;
-
-	return i;
+	processes[children].p_registers=current->p_registers;
+	processes[children].p_registers.reg_rax=0;
+	processes[current->p_pid].p_registers.reg_rax=children;
+		return children;
 
 }
 
@@ -347,35 +326,32 @@ void exception(x86_64_registers* reg) {
         break;                  /* will not be reached */
 
     case INT_SYS_PAGE_ALLOC: {
-	uintptr_t page= -1;
-	page =(uintptr_t) freealloc();
+	uintptr_t addr = current->p_registers.reg_rdi;
+	uintptr_t freep= (uintptr_t)freealloc();
+	 
+	 if(!freep)//if free page is valid
+	 {
+		current->p_registers.reg_rax = -1;
+		//console_printf(CPOS(24, 0), 0x0C00,"Out of physical memory!");//printing the out of physical memory message 
+		break;
+	 }
 
-	if(page)
-	{
-	 uintptr_t addr =(uintptr_t) current->p_registers.reg_rdi;
-	virtual_memory_map(current->p_pagetable, addr, page,PAGESIZE, PTE_P | PTE_W  | PTE_U , NULL);
-	current->p_registers.reg_rax = 0;	
-
-
-	}
-
-      else
-      {
-	console_printf(CPOS(24, 0), 0x0C00,"Out of physical memory!\n"); 
-	 current->p_registers.reg_rax = -1;
-      }
+         else
+         {
+	      virtual_memory_map(current->p_pagetable,addr,freep,PAGESIZE, PTE_P | PTE_W  | PTE_U , NULL);
+	      current->p_registers.reg_rax = 0;//assigns 0 if successful	
+          }
 
         break;
 		     	    
-			     }
+	}
 
     case INT_TIMER:
         ++ticks;
         schedule();
         break;                  /* will not be reached */
 
-    case INT_SYS_FORK:
-	// Step 5: fork()
+    case INT_SYS_FORK://step5
 	fork();
         break;
 
