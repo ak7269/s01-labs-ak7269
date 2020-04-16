@@ -49,7 +49,6 @@ typedef struct proc {
 #define INT_HARDWARE            32
 #define INT_TIMER               (INT_HARDWARE + 0)
 
-
 // hardware_init
 //    Initialize x86 hardware, including memory, interrupts, and segments.
 //    All accessible physical memory is initially mapped as readable

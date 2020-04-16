@@ -111,7 +111,7 @@ void kernel(const char* command) {
     }
 #endif
 
-	//Step1
+	//step 1
     virtual_memory_map(kernel_pagetable, 0, 0, PROC_START_ADDR, PTE_P|PTE_W,NULL);
     virtual_memory_map(kernel_pagetable, (uintptr_t)console, (uintptr_t)console, PAGESIZE, PTE_P|PTE_W|PTE_U,NULL);
         run(&processes[1]);
@@ -213,6 +213,29 @@ int assign_physical_page(uintptr_t addr, int8_t owner) {
 }
 
 
+//step 7
+int sys_exit(pid_t pid)
+{
+	uintptr_t virtuala=0;
+	uintptr_t pagen;
+	while(virtuala < MEMSIZE_VIRTUAL) 
+    	{
+	vamapping vmmap = virtual_memory_lookup(kernel_pagetable, virtuala);
+	 pagen=vmmap.pn;
+	if(pageinfo[pagen].owner == pid)//checking if the page belongs to the owner 
+        {
+	    pageinfo[pagen].refcount = 0;
+	    pageinfo[pagen].owner = PO_FREE;//freeing the page 
+        }
+	if (virtuala == PROC_START_ADDR && pageinfo[pagen].refcount >= 2 && pageinfo[vmmap.pn].owner >= 1)
+		pageinfo[pagen].refcount =pageinfo[pagen].refcount-1;
+	
+	virtuala =virtuala+ PAGESIZE;	
+    } 
+    	processes[pid].p_state = P_FREE;
+	return 0;
+}
+
 uint8_t fork(void){
 
  uint8_t children=1;
@@ -228,12 +251,39 @@ uint8_t fork(void){
 	   processes[children].p_pagetable=copy_pagetable(current->p_pagetable,children);
            processes[children].p_state=P_RUNNABLE;
    }
+   //step 7
+   if (!processes[children].p_pagetable)
+            {
+      	        sys_exit(children);
+    	        return -1;//fail 
+    	    }
+	    
 
   uintptr_t virtuala;
   for(virtuala=PROC_START_ADDR; virtuala<MEMSIZE_VIRTUAL; virtuala=virtuala+PAGESIZE){
      
 	vamapping vmmap =virtual_memory_lookup(current->p_pagetable,virtuala);
+
+	//step 6
+//	if (virtuala == PROC_START_ADDR)
+//              {
+//                   if (pageinfo[vmmap.pn].refcount > 0){
+//			   if( pageinfo[vmmap.pn].owner > 0){
+//                    
+//        		        pageinfo[vmmap.pn].refcount=pageinfo[vmmap.pn].refcount+1;
+//				pageinfo[vmmap.pn].owner=children;
+//			virtual_memory_map(processes[children].p_pagetable,
+//					virtuala, vmmap.pa,PAGESIZE, PTE_P | PTE_W | PTE_U,freealloc);
+//                  } 
+//                }
+//	}
+
+
+
+//	else
+//	{
 	if(vmmap.perm & PTE_U){
+
 	int f=0;//flag variable
 	uintptr_t physa;
 	uintptr_t freepagefound;
@@ -247,25 +297,26 @@ uint8_t fork(void){
 	   if(f==1)
 		   break;
 	}
-	if(freepagefound==0)
-	{
-		return -1;
-	}
+
+	//step 7
+	if(freepagefound == 0)
+        {
+		sys_exit(children);
+                return -1;//fail
+        }	
 	else{
         memcpy((uintptr_t*)freepagefound, (uintptr_t*) vmmap.pa, PAGESIZE);
 	pageinfo[PAGENUMBER(freepagefound)].refcount=1;//updating the refcount of the free page
 	pageinfo[PAGENUMBER(freepagefound)].owner=children;
 	virtual_memory_map(processes[children].p_pagetable,virtuala,freepagefound,PAGESIZE,PTE_U|PTE_P|PTE_W,freealloc);                                                                                                }
 	 }
-      }
+  }
+//     }
      processes[children].p_registers=current->p_registers;
      processes[children].p_registers.reg_rax=0;
      processes[current->p_pid].p_registers.reg_rax=children;
    return children;
 }
-
-
-
 
 
 
@@ -358,10 +409,12 @@ void exception(x86_64_registers* reg) {
         schedule();
         break;                  /* will not be reached */
 
-    case INT_SYS_FORK://step5
+    case INT_SYS_FORK://step 5
 	fork();
         break;
-
+    case INT_SYS_EXIT://step 7
+        sys_exit(current -> p_pid);
+        break;
     case INT_PAGEFAULT: {
         // Analyze faulting address and access type.
         uintptr_t addr = rcr2();
