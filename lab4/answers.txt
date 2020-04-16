@@ -1,18 +1,18 @@
-Name: 
-net ID: 
-NYU ID(N#): 
+Name: Anshika Kapoor
+net ID: ak7269
+NYU ID(N#): N16757402
 
 Collaborators (who you talked to about the lab, what you talked about):
 
 
 Source material that you consulted:
-
+Asked the TAs for a little bit of help while debugging
 
 Other acknowledgments:
 
 
 How long did this lab take you?
-
+10 days
 
 Anything else you'd like us to know:
 
