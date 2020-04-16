@@ -181,8 +181,6 @@ void process_setup(pid_t pid, int program_number) {
 				stackp=phya;
 			       	pageinfo[PAGENUMBER(phya)].owner=pid;
 				++pageinfo[PAGENUMBER(phya)].refcount;
-
-				
 				break;
 			 }
 		}
@@ -216,42 +214,61 @@ int assign_physical_page(uintptr_t addr, int8_t owner) {
 
 
 
-pid_t fork(void)
+uint8_t fork(void)
 {
 	int8_t children;
 	for(children=1;children<NPROC;children++)
 	{
 		if(processes[children].p_state==P_FREE)
 		{
-			processes[children].p_state=P_RUNNABLE;
-			processes[children].p_pagetable = copy_pagetable(current->p_pagetable,children);
-			if (!processes[children].p_pagetable)
+			if (!(processes[children].p_pagetable))
         		 {
         		      return -1;
         		 }
 
 			break;
 		}
-		return -1;
+		if(children>=NPROC)
+			return -1;
 	}
-	uintptr_t virtuala;
-	for(virtuala=0; virtuala< MEMSIZE_VIRTUAL; virtuala=virtuala+PAGESIZE)//copying all the data belonging to the parent 
+	current->p_pid=children;
+	processes[children].p_state=P_RUNNABLE;
+	processes[children].p_pagetable = copy_pagetable(current->p_pagetable,children);
+
+	uintptr_t freep;
+	int  virtuala;
+	for(virtuala=PROC_START_ADDR; virtuala< MEMSIZE_VIRTUAL; virtuala=virtuala+PAGESIZE)//copying all the data belonging to the parent 
 	{
 		vamapping vmmmap = virtual_memory_lookup(current->p_pagetable,virtuala);
-		if(vmmmap.perm & PTE_U )
+		if((vmmmap.perm & PTE_U)==PTE_U )
 		{
-			uintptr_t freep=(uintptr_t) freealloc;
+			//current->p_pid=children;
+
+			freep=(uintptr_t) freealloc;
+		
+
+		//	for(int ad=0;ad<MEMSIZE_PHYSICAL;)
+				
 			if(!(freep))//if it is not a valid freepage
 				return -1;
+
 			memcpy((void*)freep, (void*)vmmmap.pa, PAGESIZE);
-			virtual_memory_map(processes[children].p_pagetable,virtuala,freep,PAGESIZE,vmmmap.perm,freealloc);
+
+			pageinfo[PAGENUMBER(freep)].refcount=1;
+			pageinfo[PAGENUMBER(freep)].owner=children;
+			int vm;
+			vm=virtual_memory_map(processes[children].p_pagetable,virtuala,freep,PAGESIZE,vmmmap.perm,freealloc);
+			assert(vm>=0);
 		}
 	}
 
 	processes[children].p_registers=current->p_registers;
+//	current -> p_registers.reg_rax = children;
 	processes[children].p_registers.reg_rax=0;
-	processes[current->p_pid].p_registers.reg_rax=children;
-		return children;
+//	processes[current->p_pid].p_registers.reg_rax=children;
+	processes[children].p_pid=children;
+
+	return freep;	
 
 }
 
