@@ -179,8 +179,8 @@ void process_setup(pid_t pid, int program_number) {
 			 if(pageinfo[PAGENUMBER(phya)].owner == PO_FREE) 
 			 {	
 				stackp=phya;
-			       	pageinfo[PAGENUMBER(phya)].owner=pid;
-				++pageinfo[PAGENUMBER(phya)].refcount;
+			       	pageinfo[PAGENUMBER(phya)].owner=pid;//updating the owner 
+				++pageinfo[PAGENUMBER(phya)].refcount;//updating the refcount of the page 
 				break;
 			 }
 		}
@@ -213,65 +213,56 @@ int assign_physical_page(uintptr_t addr, int8_t owner) {
 }
 
 
+uint8_t fork(void){
 
-uint8_t fork(void)
-{
-	int8_t children;
-	for(children=1;children<NPROC;children++)
-	{
-		if(processes[children].p_state==P_FREE)
-		{
-			if (!(processes[children].p_pagetable))
-        		 {
-        		      return -1;
-        		 }
+ uint8_t children=1;
+ while(processes[children].p_state != P_FREE) {
+     ++children;
+    }
 
-			break;
-		}
-		if(children>=NPROC)
-			return -1;
+   if(children>=NPROC)//if children exceeds the limit then just returns -1
+        return -1;
+   else
+   {
+	   current->p_pid=children;//updating the current global variable
+	   processes[children].p_pagetable=copy_pagetable(current->p_pagetable,children);
+           processes[children].p_state=P_RUNNABLE;
+   }
+
+  uintptr_t virtuala;
+  for(virtuala=PROC_START_ADDR; virtuala<MEMSIZE_VIRTUAL; virtuala=virtuala+PAGESIZE){
+     
+	vamapping vmmap =virtual_memory_lookup(current->p_pagetable,virtuala);
+	if(vmmap.perm & PTE_U){
+	int f=0;//flag variable
+	uintptr_t physa;
+	uintptr_t freepagefound;
+	for(physa=0;physa<MEMSIZE_PHYSICAL;physa=physa+PAGESIZE){
+           if(pageinfo[PAGENUMBER(physa)].refcount==0){
+		   if(pageinfo[PAGENUMBER(physa)].owner==P_FREE){
+			   freepagefound=(uintptr_t)physa;
+			   f=1;//flag variable value changing to 1 indicating that a free page is found
+           }  	   
+	 }
+	   if(f==1)
+		   break;
 	}
-	current->p_pid=children;
-	processes[children].p_state=P_RUNNABLE;
-	processes[children].p_pagetable = copy_pagetable(current->p_pagetable,children);
-
-	uintptr_t freep;
-	int  virtuala;
-	for(virtuala=PROC_START_ADDR; virtuala< MEMSIZE_VIRTUAL; virtuala=virtuala+PAGESIZE)//copying all the data belonging to the parent 
+	if(freepagefound==0)
 	{
-		vamapping vmmmap = virtual_memory_lookup(current->p_pagetable,virtuala);
-		if((vmmmap.perm & PTE_U)==PTE_U )
-		{
-			//current->p_pid=children;
-
-			freep=(uintptr_t) freealloc;
-		
-
-		//	for(int ad=0;ad<MEMSIZE_PHYSICAL;)
-				
-			if(!(freep))//if it is not a valid freepage
-				return -1;
-
-			memcpy((void*)freep, (void*)vmmmap.pa, PAGESIZE);
-
-			pageinfo[PAGENUMBER(freep)].refcount=1;
-			pageinfo[PAGENUMBER(freep)].owner=children;
-			int vm;
-			vm=virtual_memory_map(processes[children].p_pagetable,virtuala,freep,PAGESIZE,vmmmap.perm,freealloc);
-			assert(vm>=0);
-		}
+		return -1;
 	}
-
-	processes[children].p_registers=current->p_registers;
-//	current -> p_registers.reg_rax = children;
-	processes[children].p_registers.reg_rax=0;
-//	processes[current->p_pid].p_registers.reg_rax=children;
-	processes[children].p_pid=children;
-
-	return freep;	
-
+	else{
+        memcpy((uintptr_t*)freepagefound, (uintptr_t*) vmmap.pa, PAGESIZE);
+	pageinfo[PAGENUMBER(freepagefound)].refcount=1;//updating the refcount of the free page
+	pageinfo[PAGENUMBER(freepagefound)].owner=children;
+	virtual_memory_map(processes[children].p_pagetable,virtuala,freepagefound,PAGESIZE,PTE_U|PTE_P|PTE_W,freealloc);                                                                                                }
+	 }
+      }
+     processes[children].p_registers=current->p_registers;
+     processes[children].p_registers.reg_rax=0;
+     processes[current->p_pid].p_registers.reg_rax=children;
+   return children;
 }
-
 
 
 
@@ -349,7 +340,6 @@ void exception(x86_64_registers* reg) {
 	 if(!freep)//if free page is valid
 	 {
 		current->p_registers.reg_rax = -1;
-		//console_printf(CPOS(24, 0), 0x0C00,"Out of physical memory!");//printing the out of physical memory message 
 		break;
 	 }
 
