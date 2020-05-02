@@ -335,25 +335,21 @@ int
 inode_unlink(const char *path)
 {
 	// LAB: Your code here.
-	struct inode *dir,*ino;
-	struct dirent *dent;
-	char name[NAME_MAX];
-
-
-	if(walk_path(path,&dir,&ino,&dent,name)<0){
-		return -ENOENT;
-
+	struct dirent *den;
+	struct inode *inod;
+	struct inode *pdi;
+	char n[NAME_MAX];
+	int result=walk_path(path,&pdi,&inod,&den,n);
+	if(result!=0)
+		return -ENOENT;//failure
+	--(inod->i_nlink);//decrement link count
+	den->d_inum=0;
+	if(inod->i_nlink==0){
+		memset(den->d_name,0,NAME_MAX*sizeof(den->d_name[0]));
+		inode_free(den->d_inum);
 	}
-
-	dent->d_inum=0;
-	ino->i_nlink-=1;
-
-	//ino->d_name="";
-	if(ino->i_nlink==0)
-	{
-		inode_free(dent->d_inum);
-	}
-	return 0;
+		
+	return 0;//success
 	
 //	panic("inode_unlink not implemented");
 }
@@ -369,31 +365,35 @@ int
 inode_link(const char *srcpath, const char *dstpath)
 {
 	// LAB: Your code here.
-	
-	struct inode *dir,*ino;
-	struct dirent *dent;
-	char name[NAME_MAX];
-
-	struct inode *dir1,*ino1;
-	struct dirent *dent1;
-	char name1[NAME_MAX];
-	
-	walk_path(srcpath,&dir,&ino,&dent,name);
-	
-	walk_path(dstpath,&dir1,&ino1,&dent1,name1);
-	
-	if(dir_alloc_dirent(dir1,&dent)==0)
+	struct dirent *den,*den1;
+	struct inode *inod,*inod1;
+	struct inode *pdi,*pdi1;
+	char n[NAME_MAX],n1[NAME_MAX];
+//	dstpath=skip_slashes(dstpath);
+	int result=walk_path(srcpath,&pdi,&inod,&den,n);
+	int result1=walk_path(dstpath+1,&pdi1,&inod1,&den1,n1);
+	if(result1==0)//if a file already exists at destination 
+		return -EEXIST;
+	if(result!=0)
+		return -1;
+	if(dir_alloc_dirent(pdi1,&den)==0)//if it was a success
 	{
-		ino->i_nlink++;
-	//	dent1->d_inum=dent->d_inum;
+		++(inod->i_nlink);	
+	//	den1->d_inum=den->d_inum;
+	//	dstpath=skip_slash(dstpath);
+	//	char distp=(char)dstpath;
+	//	char * distp = strdup(dstpath);
+	//	char dis[NAME_MAX]=(char)distp;
+	//	for(int i=0;i<NAME_MAX;i++)
+	//	{
+	//		den1->d_name[i]=dis[i];
+	//	}
 		return 0;
 
 	}
-	else
-		return -EEXIST;
+	return -1;//any other error
+	//panic("inode_link not implemented");
 
-//	panic("inode_link not implemented");
-	return -1;
 }
 
 // Return information about the specified inode.
