@@ -62,7 +62,7 @@ alloc_block(void)
 				{
       					bitmap[i] &=  ~(1u << j);
 					flush_block(&bitmap[i]);
-		 			bnum=j+i*32;
+		 			bnum=i*32+j;
 					return bnum;
 				}
 			}
