@@ -21,4 +21,7 @@ How long did this lab take you?
 Anything else you'd like us to know:
 
 
+Do you feel like you gained an understanding of how to build a file system in this lab? Please suggest improvements.
+Yes I feel like I have gained a depper understanding. 
+
 Extra credit exercise(s) (describe what you coded):
