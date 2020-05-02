@@ -13,10 +13,10 @@ Other acknowledgments:
 
 
 Output for exercise 6:
-Non-working lab2 .
+Non-working lab2.
 
 How long did this lab take you?
-6 days
+6 days.
 
 Anything else you'd like us to know:
 
