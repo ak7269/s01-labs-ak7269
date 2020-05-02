@@ -1,6 +1,6 @@
-Name:
-net ID:
-NYU ID(N#):
+Name: Anshika Kapoor 
+net ID: ak7269
+NYU ID(N#): N16757402
 
 Collaborators (who you talked to about the lab, what you talked about):
 
@@ -13,10 +13,10 @@ Other acknowledgments:
 
 
 Output for exercise 6:
-
+Non-working lab2 .
 
 How long did this lab take you?
-
+6 days
 
 Anything else you'd like us to know:
 
