@@ -37,7 +37,30 @@ int
 inode_block_walk(struct inode *ino, uint32_t filebno, uint32_t **ppdiskbno, bool alloc)
 {
 	// LAB: Your code here.
-	panic("inode_block_walk not implemented");
+	
+	void* addr;
+
+	if(filebno <= N_DIRECT)
+		*ppdiskbno = &ino->i_direct[filebno]; 
+	else if(filebno >= N_DIRECT+N_INDIRECT)
+		return EINVAL;
+	else if(filebno <= N_DIRECT + N_INDIRECT)
+ 	{
+  	       	if (ino->i_indirect==0 && !alloc)
+   	       	{
+    			 if (!alloc)
+				return ENOENT;
+		         else if ((ino->i_indirect = alloc_block())) 
+				return ENOSPC;    			 
+  		 }
+  	addr=diskaddr(ino->i_indirect);
+  	*ppdiskbno = addr+4*(filebno - N_DIRECT);
+ 	} 
+
+
+	return 0;//if success
+
+ //	panic("inode_block_walk not implemented");
 }
 
 // Set *blk to the address in memory where the filebno'th block of
@@ -53,7 +76,22 @@ int
 inode_get_block(struct inode *ino, uint32_t filebno, char **blk)
 {
 	// LAB: Your code here.
-	panic("inode_get_block not implemented");
+	int result;
+	uint32_t *pdb;
+       	result=inode_block_walk(ino, filebno, &pdb, true);
+	 if (*pdb == 0)
+ 		*pdb = alloc_block();
+	 if (result<0)
+	 {
+		 if(result==ENOSPC)
+			 return ENOSPC;
+		 else
+			 return EINVAL;
+   	 }
+	*blk = diskaddr(*pdb);
+   	 return 0;//success	
+
+	//panic("inode_get_block not implemented");
 }
 
 // Create "path".  On success set *pino to point at the inode and return 0.
@@ -202,11 +240,26 @@ inode_free_block(struct inode *ino, uint32_t filebno)
 static void
 inode_truncate_blocks(struct inode *ino, uint32_t newsize)
 {
-	int r;
-	uint32_t bno, old_nblocks, new_nblocks;
-
 	// LAB: Your code here.
-	panic("inode_truncate_blocks not implemented");
+	int blockn,result;
+	for (blockn = (newsize+BLKSIZE-1)/BLKSIZE; blockn < (ino->i_size+BLKSIZE-1)/BLKSIZE; blockn++){
+		result=inode_free_block(ino,blockn);
+		if (result!= 0)
+                printf("warning:file free block returns %d", inode_free_block(ino,blockn));
+       }
+	int nblock=(newsize+BLKSIZE-1)/BLKSIZE;
+	if (nblock <= N_DIRECT && ino->i_indirect) {
+                free_block(ino->i_indirect);
+                ino->i_indirect = 0;
+        }
+	else if(nblock <= N_DIRECT+N_INDIRECT){
+		if(ino->i_double){
+			free_block(ino->i_double);
+			ino->i_double =0;
+		}
+	}
+
+	//panic("inode_truncate_blocks not implemented");
 }
 
 // Set the size of inode ino, truncating or extending as necessary.
@@ -282,7 +335,27 @@ int
 inode_unlink(const char *path)
 {
 	// LAB: Your code here.
-	panic("inode_unlink not implemented");
+	struct inode *dir,*ino;
+	struct dirent *dent;
+	char name[NAME_MAX];
+
+
+	if(walk_path(path,&dir,&ino,&dent,name)<0){
+		return -ENOENT;
+
+	}
+
+	dent->d_inum=0;
+	ino->i_nlink-=1;
+
+	//ino->d_name="";
+	if(ino->i_nlink==0)
+	{
+		inode_free(dent->d_inum);
+	}
+	return 0;
+	
+//	panic("inode_unlink not implemented");
 }
 
 // Link the inode at the location srcpath to the new location dstpath.
@@ -296,7 +369,31 @@ int
 inode_link(const char *srcpath, const char *dstpath)
 {
 	// LAB: Your code here.
-	panic("inode_link not implemented");
+	
+	struct inode *dir,*ino;
+	struct dirent *dent;
+	char name[NAME_MAX];
+
+	struct inode *dir1,*ino1;
+	struct dirent *dent1;
+	char name1[NAME_MAX];
+	
+	walk_path(srcpath,&dir,&ino,&dent,name);
+	
+	walk_path(dstpath,&dir1,&ino1,&dent1,name1);
+	
+	if(dir_alloc_dirent(dir1,&dent)==0)
+	{
+		ino->i_nlink++;
+	//	dent1->d_inum=dent->d_inum;
+		return 0;
+
+	}
+	else
+		return -EEXIST;
+
+//	panic("inode_link not implemented");
+	return -1;
 }
 
 // Return information about the specified inode.
