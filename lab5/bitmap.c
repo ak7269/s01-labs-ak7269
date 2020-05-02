@@ -46,6 +46,36 @@ alloc_block(void)
 	// super->s_nblocks blocks in the disk altogether.
 
 	// LAB: Your code here.
-	panic("alloc_block not implemented");
-	return -ENOSPC;
+	
+ 	int bnum;
+	uint32_t length = super->s_nblocks/32;
+	int i,j;
+	
+ 	for (i = 0; i < length; i++)
+	 {
+		 
+		 if(block_is_free(i)!=0)
+		 {
+			for(j=0;j<32;j++)
+			{
+				if((bitmap[i]>>j)& 0x1)
+				{
+      					bitmap[i] &=  ~(1u << j);
+					flush_block(&bitmap[i]);
+		 			bnum=j+i*32;
+					return bnum;
+				}
+			}
+			
+   		}
+		 else
+			 continue;
+
+	 }
+		 
+	//panic("alloc_block not implemented");
+
+ 	 return -ENOSPC;
+	
+
 }
